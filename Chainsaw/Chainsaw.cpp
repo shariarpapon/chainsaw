@@ -1,8 +1,14 @@
 #include <iostream>
-#include "general_utils.h"
+#include "GeneralUtils.h"
 
-int main()
+std::string getTestRawCode()
 {
-	prompt_read_string("hello world!");
+	return "1 base() while{ do if(x = y) > variable } end; var method function[] #this is comment#\0";
+};
+
+int main() {
+
+	std::cout << getTestRawCode().c_str() << std::endl;
 }
+
 

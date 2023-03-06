@@ -128,10 +128,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Chainsaw.cpp" />
-    <ClCompile Include="general_utils.cpp" />
+    <ClCompile Include="ChainsawLexer.cpp" />
+    <ClCompile Include="GeneralUtils.cpp" />
+    <ClCompile Include="ChainsawToken.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="general_utils.h" />
+    <ClInclude Include="ChainsawLexer.h" />
+    <ClInclude Include="GeneralUtils.h" />
+    <ClInclude Include="ChainsawToken.h" />
+    <ClInclude Include="TokenType.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
