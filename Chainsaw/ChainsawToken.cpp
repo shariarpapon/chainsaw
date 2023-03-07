@@ -1,16 +1,22 @@
 #include <iostream>
+#include <string>
 #include "TokenType.h"
 
 namespace chainsaw {
 	namespace core {
-		class ChainsawToken {
-		public:
-			const char* raw;
+
+		struct ChainsawToken {
+
+			std::string rawStr;
 			TokenType tokenType;
-			ChainsawToken(const char* p_raw, TokenType p_tokenType)
-			{
-				raw = p_raw;
-				tokenType = p_tokenType;
+
+			ChainsawToken(std::string l_rawStr, TokenType l_tokenType) {
+				rawStr = l_rawStr;
+				tokenType = l_tokenType;
+			}
+
+			std::string get_str_rep() {
+				return "(" + rawStr + ")";
 			}
 		};
 
