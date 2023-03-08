@@ -33,27 +33,21 @@
     <ClCompile Include="GeneralUtils.cpp">
       <Filter>Source Files\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="ChainsawLexer.cpp">
-      <Filter>Source Files\Core</Filter>
-    </ClCompile>
     <ClCompile Include="Chainsaw.cpp">
       <Filter>Source Files\Main</Filter>
     </ClCompile>
-    <ClCompile Include="ChainsawToken.cpp">
+    <ClCompile Include="Lexer.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ChainsawToken.h">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="ChainsawLexer.h">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="GeneralUtils.h">
       <Filter>Header Files\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="TokenType.h">
+    <ClInclude Include="Lexer.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralTokenType.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
   </ItemGroup>

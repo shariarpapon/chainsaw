@@ -1,23 +1,24 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #include "GeneralUtils.h"
-#include "ChainsawLexer.h"
-#include "ChainsawToken.h"
+#include "Lexer.h"
 
-std::string getTestRawCode()
+using namespace chainsaw::core;
+using namespace chainsaw::utils;
+
+const char* getTestSource()
 {
 	return "1 base() while{ do if(x = y) > variable } end; var method function[] //this is comment.\n bool(x < 23412)";
 };
 
 int main() {
-	std::string rawStr = getTestRawCode();
-	const char* ptr_raw = rawStr.c_str();
-	chainsaw::core::ChainsawLexer chainsawLexer(ptr_raw);
-	std::vector<chainsaw::core::ChainsawToken> tokens = chainsawLexer.tokenize();
-	for (chainsaw::core::ChainsawToken token : tokens)
-	{
-		std::cout << token.get_str_rep() << std::endl;
-	}
+	Lexer lexer();
+	bool a1 = Lexer::isSourceFileExtensionValid(".raaw");
+	bool a2 = Lexer::isSourceFileExtensionValid(".saw");
+	
+	log_msg(std::to_string(a1));
+	log_msg(std::to_string(a2));
 }
 
 
