@@ -5,7 +5,6 @@
 
 namespace chainsaw {
 	namespace core {
-
 		class Token
 		{
 		public:
@@ -15,28 +14,43 @@ namespace chainsaw {
 				m_gTokenType = gTokenType;
 				m_tokenValue = tokenValue;
 			}
+			inline GeneralTokenType getGTokenType() 
+			{
+				return m_gTokenType;
+			}
 			inline virtual std::string getStringRep()
 			{ 
-				return "| " + std::to_string(m_gTokenType) + " ~ " + m_tokenValue + " |";
+				return "<" + std::to_string(m_gTokenType) + "> |" + m_tokenValue + "|";
 			}
 		protected:
 			GeneralTokenType m_gTokenType;
 			std::string m_tokenValue;
 		};
 
-		class BlockToken : Token 
+		class BlockToken : public Token
 		{
 		public:
-			inline BlockToken() 
+			inline BlockToken(int bkIndex, GeneralTokenType bkTokenType, std::vector<Token*> bkTokens)
 			{
-				m_blockTokens = std::vector<Token>();
+				m_bkIndex = bkIndex;
+				m_gTokenType = bkTokenType;
+				m_bkTokensPtr = bkTokens;
 			}
-			void addTokenToBlock(Token token) 
+			inline int getScopeIndex()
 			{
-				m_blockTokens.push_back(token);
+				return m_bkIndex;
+			}
+			inline std::vector<Token*> getBlockTokens()
+			{
+				return m_bkTokensPtr;
+			}
+			inline std::string getStringRep() override
+			{
+				return "<Bk> |" + std::to_string(m_bkIndex) + "|";
 			}
 		private:
-			std::vector<Token> m_blockTokens;
+			int m_bkIndex;
+			std::vector<Token*> m_bkTokensPtr;
 		};
 	}
 }

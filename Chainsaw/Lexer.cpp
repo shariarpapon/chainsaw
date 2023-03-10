@@ -5,33 +5,9 @@
 
 using namespace chainsaw::core;
 
-class TokenBlock
+std::vector<Token*> Lexer::analyze()
 {
-public:
-	TokenBlock(int scopeIndex, std::vector<Token> scopeTokens)
-	{
-		m_scopeIndex = scopeIndex;
-		m_scopeTokens = scopeTokens;
-	}
-	int getScopeIndex()
-	{
-		return m_scopeIndex;
-	}
-	std::vector<Token> getScopeTokens()
-	{
-		return m_scopeTokens;
-	}
-	std::string getStringRep()
-	{
-		return "Scope Index [" + std::to_string(m_scopeIndex) + "]";
-	}
-private:
-	int m_scopeIndex;
-	std::vector<Token> m_scopeTokens;
-};
-
-void Lexer::analyze()
-{
+	std::vector<Token*> _tokens;
 	std::string _tokenValue = "";
 	GeneralTokenType _gTokenType = GeneralTokenType::k_unexpected;
 
@@ -43,40 +19,100 @@ void Lexer::analyze()
 
 		switch (_gTokenType) 
 		{
-			case GeneralTokenType::seq_delimiter: 
+			case seq_delimiter: 
 			{
 				parseDelimiters();
 				continue;
 			}
-			case GeneralTokenType::k_unexpected: 
+			case k_unexpected: 
 			{
 				parseUnexpected(_tokenValue);
 				break;
 			}
-			case GeneralTokenType::seq_identifier:
+			case seq_identifier:
 			{
 				parseIdentifiers(_tokenValue);
 				break;
 			}
-			case GeneralTokenType::seq_number: 
+			case seq_number: 
 			{
 				parseNumbers(_tokenValue);
 				break;
 			}
-			case GeneralTokenType::ind_commentStart:
+			case ind_commentStart:
 			{
 				parseComment(_gTokenType, _tokenValue);
 				break;
 			}
 			default: 
 			{
-				parseRegularToken(_tokenValue);
-				break;
+				parseRegularToken(_tokens,_gTokenType, _tokenValue);
+				continue;
 			}
 		}
-
-		addToken(_gTokenType, _tokenValue);
+		addToken(_tokens, _gTokenType, _tokenValue);
 	}
+	return _tokens;
+}
+std::vector<Token*> Lexer::analyzeBlock(GeneralTokenType& _gTokenType, GeneralTokenType _bkeToken)
+{
+	std::vector<Token*> _tokens;
+	std::string _tokenValue = "";
+
+	addToken(_tokens, getCurrGTokenType(getValue()), BLOCK_START_TOKEN_VALUE);
+	nextValue();
+
+	while (!isNullTerminator(getValue()))
+	{
+		//initialize token type and token value for the current character
+		_gTokenType = getCurrGTokenType(getValue());
+
+		if (_gTokenType == _bkeToken)
+		{
+			break;
+		}
+
+		_tokenValue.clear();
+
+		switch (_gTokenType)
+		{
+		case seq_delimiter:
+		{
+			parseDelimiters();
+			continue;
+		}
+		case k_unexpected:
+		{
+			parseUnexpected(_tokenValue);
+			break;
+		}
+		case seq_identifier:
+		{
+			parseIdentifiers(_tokenValue);
+			break;
+		}
+		case seq_number:
+		{
+			parseNumbers(_tokenValue);
+			break;
+		}
+		case ind_commentStart:
+		{
+			parseComment(_gTokenType, _tokenValue);
+			break;
+		}
+		default:
+		{
+			parseRegularToken(_tokens, _gTokenType, _tokenValue);
+			continue;
+		}
+		}
+
+		addToken(_tokens, _gTokenType, _tokenValue);
+	}
+
+	addToken(_tokens, getCurrGTokenType(getValue()), BLOCK_END_TOKEN_VALUE);
+	return _tokens;
 }
 
 void Lexer::parseDelimiters() 
@@ -110,27 +146,39 @@ void Lexer::parseNumbers(std::string& _tokenValue)
 }
 void Lexer::parseComment(GeneralTokenType& _gTokenType, std::string& _tokenValue) 
 {
-	_gTokenType = getCurrGTokenType(getValue());
-	if (_gTokenType != GeneralTokenType::ind_commentStart)
+	nextValue();
+	_gTokenType = GeneralTokenType::seq_commentValue;
+	while (!isEndOfComment(getValue()))
 	{
-		_tokenValue.push_back('#');
-		_gTokenType = GeneralTokenType::seq_identifier;
-	}
-	else
-	{
-		_gTokenType = GeneralTokenType::seq_commentValue;
+		_tokenValue.push_back(getValue());
 		nextValue();
-		while (!isEndOfComment(getValue()))
-		{
-			_tokenValue.push_back(getValue());
-			nextValue();
-		}
 	}
-}
-void Lexer::parseRegularToken(std::string& _tokenValue)
-{
-	_tokenValue.push_back(getValue());
 	nextValue();
 }
-
+void Lexer::parseRegularToken(std::vector<Token*>& _tokens, GeneralTokenType& _gTokenType, std::string& _tokenValue)
+{
+	_gTokenType = getCurrGTokenType(getValue());
+	if (_gTokenType == bks_scope) 
+	{
+		parseBlock(_tokens, _gTokenType, bk_scope, bke_scope);
+	}
+	else if (_gTokenType == bks_expression) 
+	{
+		parseBlock(_tokens,_gTokenType, bk_expression, bke_expression);
+	}
+	else if(_gTokenType != bke_expression && _gTokenType != bke_scope)
+	{
+		_tokenValue.push_back(getValue());
+		addToken(_tokens, _gTokenType, _tokenValue);
+		nextValue();
+	}
+}
+void Lexer::parseBlock(std::vector<Token*>& _tokens, GeneralTokenType& _gTokenType, GeneralTokenType _bkTokenType, GeneralTokenType _bkeTokenType) 
+{
+	std::vector<Token*> bkTokens = analyzeBlock(_gTokenType, _bkeTokenType);
+	BlockToken* bkTokenPtr = new BlockToken(m_currBkIndex, _bkTokenType, bkTokens);
+	_tokens.push_back(bkTokenPtr);
+	nextValue();
+	++m_currBkIndex;
+}
 

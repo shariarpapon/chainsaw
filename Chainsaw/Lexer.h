@@ -1,4 +1,5 @@
 #pragma once
+#include <typeinfo>
 #include "Token.h"
 #include "TokenTypes.h"
 
@@ -6,6 +7,8 @@ namespace chainsaw {
 	namespace core {
 
 		static const std::string SOURCE_FILE_EXTENSION = ".saw";
+		static const std::string BLOCK_START_TOKEN_VALUE = "*BLOCK_START*";
+		static const std::string BLOCK_END_TOKEN_VALUE = "*BLOCK_END*";
 		
 		class Lexer
 		{
@@ -13,28 +16,57 @@ namespace chainsaw {
 			inline Lexer(const char* source)
 			{
 				m_source = source;
+				m_currBkIndex = 0;
 			}
 			inline static bool isSourceFileExtensionValid(std::string extension)
 			{
 				return extension == SOURCE_FILE_EXTENSION;
 			}
-			inline std::vector<Token> getAnalyzedTokens()
+			inline static void printTokensStrRep(std::vector<Token*>& _tokens) 
 			{
-				return m_tokens;
+				for (Token* token : _tokens) 
+				{
+					std::cout << token->getStringRep() << std::endl;
+				}
+			}
+			inline static void expandBlockTokens(std::vector<Token*>& _tokens) 
+			{
+				std::vector<Token*> _expandedTokens;
+				for (Token* orgTokenPtr : _tokens)
+				{
+					BlockToken* bkTokenPtr = dynamic_cast<BlockToken*>(orgTokenPtr);
+					if (bkTokenPtr)
+					{
+						for (Token* tokenPtr : bkTokenPtr->getBlockTokens())
+						{
+							Token* nwToken = new Token(*tokenPtr);
+							_expandedTokens.push_back(nwToken);
+						}
+					}
+					else 
+					{
+						_expandedTokens.push_back(orgTokenPtr);
+					}
+				};
+				_tokens.clear();
+				_tokens = _expandedTokens;
 			}
 
-			void analyze();
+			//Will analyze the source assigned in the constructor; starting from the current character address
+			std::vector<Token*> analyze();
 			void parseDelimiters();
 			void parseUnexpected(std::string& _tokenValue);
 			void parseIdentifiers(std::string& _tokenValue);
 			void parseNumbers(std::string& _tokenValue);
 			void parseComment(GeneralTokenType& _gTokenType, std::string& _tokenValue);
-			void parseRegularToken(std::string& _tokenValue);
+			void parseRegularToken(std::vector<Token*>& _tokens, GeneralTokenType& _gTokenType, std::string& _tokenValue);
+			void parseBlock(std::vector<Token*>& _tokens, GeneralTokenType& _gTokenType, GeneralTokenType _bkTokenType, GeneralTokenType _bkeTokenType);
 
 		private:
-			std::vector<Token> m_tokens;
+			int m_currBkIndex;
 			const char* m_source;
 
+			std::vector<Token*> analyzeBlock(GeneralTokenType& _gTokenType, GeneralTokenType _bkeToken);
 			inline GeneralTokenType getCurrGTokenType(char c)
 			{
 				switch (c)
@@ -47,44 +79,45 @@ namespace chainsaw {
 				case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
 				case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
 				case 'v': case 'w': case 'x': case 'y': case 'z': case '_':
-					return GeneralTokenType::seq_identifier;
+					return seq_identifier;
 				case '0': case '1': case '2': case '3': case '4': case '5': case '6':
 				case '7': case '8': case '9': case '.':
-					return GeneralTokenType::seq_number;
+					return seq_number;
 				case ' ': case '\n': case '\r': case '\t': case '\f': case '\v':
-					return GeneralTokenType::seq_delimiter;
+					return seq_delimiter;
 				case '#':
-					return GeneralTokenType::ind_commentStart;
+					return ind_commentStart;
 
 				case '+': case '-': case '*': case '/': case '%': case '&': case '<':
 				case '>': case '=': case '|': case '!': case ':':
-					return GeneralTokenType::ind_operatorDelim;
+					return ind_operatorDelim;
 				case ';':
-					return GeneralTokenType::ind_statementEnd;
+					return ind_statementEnd;
 				case ',':
-					return GeneralTokenType::ind_accessor;
+					return ind_accessor;
 
 				case '"':
-					return GeneralTokenType::enc_string;
+					return enc_string;
 
 				case '{':
-					return GeneralTokenType::bks_scope;
+					return bks_scope;
 				case '}':
-					return GeneralTokenType::bke_scope;
+					return bke_scope;
 				case '(': 
-					return GeneralTokenType::bks_expression;
+					return bks_expression;
 				case ')': 
-					return GeneralTokenType::bke_expression;
+					return bke_expression;
 
 				case '\0':
-					return GeneralTokenType::k_terminate;
+					return k_terminate;
 				default:
-					return GeneralTokenType::k_unexpected;
+					return k_unexpected;
 				}
 			}
-			inline void addToken(GeneralTokenType gTokenType, std::string tokenValue)
+			inline void addToken(std::vector<Token*>& _tokens, GeneralTokenType gTokenType, std::string tokenValue)
 			{
-				m_tokens.push_back(Token::Token(gTokenType, tokenValue));
+				Token* token = new Token(gTokenType, tokenValue);
+				_tokens.push_back(token);
 			}
 			inline void nextValue()
 			{
@@ -145,7 +178,7 @@ namespace chainsaw {
 			}
 			inline bool isEndOfComment(char c)
 			{
-				return c == '\n' || c == '\v' || c == '\r' || c == '\0';
+				return c == '\n' || c == '\v' || c == '\r' || c == '\0' || c == '#';
 			}
 			inline bool isNullTerminator(char c)
 			{

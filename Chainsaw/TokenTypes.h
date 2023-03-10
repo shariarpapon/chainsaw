@@ -4,7 +4,7 @@ namespace chainsaw {
 	
 		enum GeneralTokenType
 		{
-			seq_delimiter,
+			seq_delimiter = 0,
 			seq_identifier,
 			seq_number,
 			seq_commentValue,
@@ -18,8 +18,10 @@ namespace chainsaw {
 
 			bks_scope,
 			bke_scope,
+			bk_scope,
 			bks_expression,
 			bke_expression,
+			bk_expression,
 
 			k_terminate,
 			k_unexpected,
