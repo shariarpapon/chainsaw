@@ -50,5 +50,8 @@
     <ClInclude Include="Token.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="TokenTypes.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -5,10 +5,10 @@
 
 using namespace chainsaw::core;
 
-struct Lexer::Scope
+class TokenBlock
 {
 public:
-	Scope(int scopeIndex, std::vector<Token> scopeTokens)
+	TokenBlock(int scopeIndex, std::vector<Token> scopeTokens)
 	{
 		m_scopeIndex = scopeIndex;
 		m_scopeTokens = scopeTokens;
@@ -33,9 +33,9 @@ private:
 void Lexer::analyze()
 {
 	std::string _tokenValue = "";
-	Token::GeneralTokenType _gTokenType = Token::GeneralTokenType::k_unexpected;
+	GeneralTokenType _gTokenType = GeneralTokenType::k_unexpected;
 
-	while (!isTerminated(getValue()))
+	while (!isNullTerminator(getValue()))
 	{
 		//initialize token type and token value for the current character
 		_gTokenType = getCurrGTokenType(getValue());
@@ -43,66 +43,94 @@ void Lexer::analyze()
 
 		switch (_gTokenType) 
 		{
-			case Token::GeneralTokenType::seq_delimiter: 
+			case GeneralTokenType::seq_delimiter: 
 			{
-				while (isDelimiter(getValue()))
-				{
-					nextValue();
-				}
-				continue; 
+				parseDelimiters();
+				continue;
 			}
-			case Token::GeneralTokenType::k_unexpected: 
+			case GeneralTokenType::k_unexpected: 
 			{
-				_tokenValue = "UNEXPECTED";
-				nextValue();
+				parseUnexpected(_tokenValue);
 				break;
 			}
-			case Token::GeneralTokenType::seq_identifier:
+			case GeneralTokenType::seq_identifier:
 			{
-				while (isIdentifier(getValue()))
-				{
-					_tokenValue.push_back(getValue());
-					nextValue();
-				}
+				parseIdentifiers(_tokenValue);
 				break;
 			}
-			case Token::GeneralTokenType::seq_number: 
+			case GeneralTokenType::seq_number: 
 			{
-				bool _hasDecimalPoint = false;
-				while (isNumber(getValue(), _hasDecimalPoint))
-				{
-					_tokenValue.push_back(getValue());
-					nextValue();
-				}
+				parseNumbers(_tokenValue);
 				break;
 			}
-			case Token::GeneralTokenType::seq_commentStart:
+			case GeneralTokenType::ind_commentStart:
 			{
-				_gTokenType = getCurrGTokenType(getValue());
-				if (_gTokenType != Token::GeneralTokenType::seq_commentStart)
-				{
-					_tokenValue.push_back('/');
-					_gTokenType = Token::GeneralTokenType::seq_identifier;
-				}
-				else
-				{
-					_gTokenType = Token::GeneralTokenType::seq_commentValue;
-					nextValue();
-					while (!isCommentEnd(getValue()))
-					{
-						_tokenValue.push_back(getValue());
-						nextValue();
-					}
-				}
+				parseComment(_gTokenType, _tokenValue);
 				break;
 			}
 			default: 
 			{
-				_tokenValue.push_back(getValue());
-				nextValue();
+				parseRegularToken(_tokenValue);
+				break;
 			}
 		}
+
 		addToken(_gTokenType, _tokenValue);
 	}
 }
+
+void Lexer::parseDelimiters() 
+{
+	while (isValidDelimiter(getValue()))
+	{
+		nextValue();
+	}
+}
+void Lexer::parseUnexpected(std::string& _tokenValue)
+{
+	_tokenValue = "UNEXPECTED";
+	nextValue();
+}
+void Lexer::parseIdentifiers(std::string& _tokenValue)
+{
+	while (isValidIdentifier(getValue()))
+	{
+		_tokenValue.push_back(getValue());
+		nextValue();
+	}
+}
+void Lexer::parseNumbers(std::string& _tokenValue) 
+{
+	bool _hasDecimalPoint = false;
+	while (isValidNumber(getValue(), _hasDecimalPoint))
+	{
+		_tokenValue.push_back(getValue());
+		nextValue();
+	}
+}
+void Lexer::parseComment(GeneralTokenType& _gTokenType, std::string& _tokenValue) 
+{
+	_gTokenType = getCurrGTokenType(getValue());
+	if (_gTokenType != GeneralTokenType::ind_commentStart)
+	{
+		_tokenValue.push_back('#');
+		_gTokenType = GeneralTokenType::seq_identifier;
+	}
+	else
+	{
+		_gTokenType = GeneralTokenType::seq_commentValue;
+		nextValue();
+		while (!isEndOfComment(getValue()))
+		{
+			_tokenValue.push_back(getValue());
+			nextValue();
+		}
+	}
+}
+void Lexer::parseRegularToken(std::string& _tokenValue)
+{
+	_tokenValue.push_back(getValue());
+	nextValue();
+}
+
 

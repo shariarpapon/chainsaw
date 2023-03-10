@@ -1,5 +1,6 @@
 #pragma once
 #include "Token.h"
+#include "TokenTypes.h"
 
 namespace chainsaw {
 	namespace core {
@@ -8,8 +9,6 @@ namespace chainsaw {
 		
 		class Lexer
 		{
-			struct Scope;
-
 		public:
 			inline Lexer(const char* source)
 			{
@@ -25,12 +24,18 @@ namespace chainsaw {
 			}
 
 			void analyze();
+			void parseDelimiters();
+			void parseUnexpected(std::string& _tokenValue);
+			void parseIdentifiers(std::string& _tokenValue);
+			void parseNumbers(std::string& _tokenValue);
+			void parseComment(GeneralTokenType& _gTokenType, std::string& _tokenValue);
+			void parseRegularToken(std::string& _tokenValue);
 
 		private:
 			std::vector<Token> m_tokens;
 			const char* m_source;
 
-			inline Token::GeneralTokenType getCurrGTokenType(char c)
+			inline GeneralTokenType getCurrGTokenType(char c)
 			{
 				switch (c)
 				{
@@ -41,30 +46,43 @@ namespace chainsaw {
 				case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
 				case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
 				case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
-				case 'v': case 'w': case 'x': case 'y': case 'z':
-					return Token::GeneralTokenType::seq_identifier;
+				case 'v': case 'w': case 'x': case 'y': case 'z': case '_':
+					return GeneralTokenType::seq_identifier;
 				case '0': case '1': case '2': case '3': case '4': case '5': case '6':
 				case '7': case '8': case '9': case '.':
-					return Token::GeneralTokenType::seq_number;
+					return GeneralTokenType::seq_number;
 				case ' ': case '\n': case '\r': case '\t': case '\f': case '\v':
-					return Token::GeneralTokenType::seq_delimiter;
-				case '/':
-					return Token::GeneralTokenType::seq_commentStart;
-				case '{':
-					return Token::GeneralTokenType::ind_scopeStart;
-				case '}':
-					return Token::GeneralTokenType::ind_scopeEnd;
+					return GeneralTokenType::seq_delimiter;
+				case '#':
+					return GeneralTokenType::ind_commentStart;
+
+				case '+': case '-': case '*': case '/': case '%': case '&': case '<':
+				case '>': case '=': case '|': case '!': case ':':
+					return GeneralTokenType::ind_operatorDelim;
 				case ';':
-					return Token::GeneralTokenType::ind_statementEnd;
+					return GeneralTokenType::ind_statementEnd;
 				case ',':
-					return Token::GeneralTokenType::ind_accessor;
+					return GeneralTokenType::ind_accessor;
+
+				case '"':
+					return GeneralTokenType::enc_string;
+
+				case '{':
+					return GeneralTokenType::bks_scope;
+				case '}':
+					return GeneralTokenType::bke_scope;
+				case '(': 
+					return GeneralTokenType::bks_expression;
+				case ')': 
+					return GeneralTokenType::bke_expression;
+
 				case '\0':
-					return Token::GeneralTokenType::k_terminate;
+					return GeneralTokenType::k_terminate;
 				default:
-					return Token::GeneralTokenType::k_unexpected;
+					return GeneralTokenType::k_unexpected;
 				}
 			}
-			inline void addToken(Token::GeneralTokenType gTokenType, std::string tokenValue)
+			inline void addToken(GeneralTokenType gTokenType, std::string tokenValue)
 			{
 				m_tokens.push_back(Token::Token(gTokenType, tokenValue));
 			}
@@ -76,7 +94,7 @@ namespace chainsaw {
 			{
 				return *m_source;
 			}
-			inline bool isDelimiter(char c)
+			inline bool isValidDelimiter(char c)
 			{
 				switch (c)
 				{
@@ -86,7 +104,7 @@ namespace chainsaw {
 					return false;
 				}
 			}
-			inline bool isIdentifier(char c)
+			inline bool isValidIdentifier(char c)
 			{
 				switch (c)
 				{
@@ -107,7 +125,7 @@ namespace chainsaw {
 					return false;
 				}
 			}
-			inline bool isNumber(char c, bool& hasDecimalPoint)
+			inline bool isValidNumber(char c, bool& hasDecimalPoint)
 			{
 				switch (c)
 				{
@@ -125,16 +143,15 @@ namespace chainsaw {
 					return false;
 				}
 			}
-			inline bool isCommentEnd(char c)
+			inline bool isEndOfComment(char c)
 			{
 				return c == '\n' || c == '\v' || c == '\r' || c == '\0';
 			}
-			inline bool isTerminated(char c)
+			inline bool isNullTerminator(char c)
 			{
 				if (c == '\0') return true;
 				else return false;
 			}
-
 		};
 
 	}
