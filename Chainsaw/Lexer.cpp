@@ -102,69 +102,6 @@ void Lexer::analyze()
 				nextValue();
 			}
 		}
-
-		/*
-		if (_gTokenType == Token::GeneralTokenType::seq_delimiter)
-		{
-			//process the first non-delim character in the next iteration (prevents adding delim characters to the list of tokens).
-			while (isDelimiter(getValue()))
-			{
-				nextValue();
-			}
-			continue;
-		}
-		else if (_gTokenType == Token::GeneralTokenType::k_unexpected)
-		{
-			//special case premature return
-			_tokenValue = "*UNEXPECTED";
-			nextValue();
-		}
-		else if (_gTokenType == Token::GeneralTokenType::seq_identifier)
-		{
-			//process identifier-sequence
-			while (isIdentifier(getValue()))
-			{
-				_tokenValue.push_back(getValue());
-				nextValue();
-			}
-		}
-		else if (_gTokenType == Token::GeneralTokenType::seq_number)
-		{
-			bool _hasDecimalPoint = false;
-			//process number-sequence
-			while (isNumber(getValue(), _hasDecimalPoint))
-			{
-				_tokenValue.push_back(getValue());
-				nextValue();
-			}
-		}
-		else if (_gTokenType == Token::GeneralTokenType::seq_commentStart)
-		{
-			//process comment tokens
-			nextValue();
-			_gTokenType = getCurrGTokenType(getValue());
-			if (_gTokenType != Token::GeneralTokenType::seq_commentStart)
-			{
-				_tokenValue.push_back('/');
-				_gTokenType = Token::GeneralTokenType::seq_identifier;
-			}
-			else
-			{
-				_gTokenType = Token::GeneralTokenType::seq_commentValue;
-				nextValue();
-				while (!isCommentEnd(getValue()))
-				{
-					_tokenValue.push_back(getValue());
-					nextValue();
-				}
-			}
-		}
-		else 
-		{
-			_tokenValue.push_back(getValue());
-			nextValue();
-		}
-		*/
 		addToken(_gTokenType, _tokenValue);
 	}
 }
