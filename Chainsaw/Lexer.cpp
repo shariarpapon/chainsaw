@@ -1,195 +1,171 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "GeneralTokenType.h"
 #include "Lexer.h"
-#include "GeneralUtils.h"
 
-using namespace chainsaw::utils;
+using namespace chainsaw::core;
 
-const char* m_source;
-std::vector<Token> m_tokens;
-
-Lexer::Lexer(const char* source)
+struct Lexer::Scope
 {
-		m_source = source;
-}
-
-std::vector<Token> Lexer::getAnalyzedToken()
-{
-	return m_tokens;
-}
+public:
+	Scope(int scopeIndex, std::vector<Token> scopeTokens)
+	{
+		m_scopeIndex = scopeIndex;
+		m_scopeTokens = scopeTokens;
+	}
+	int getScopeIndex()
+	{
+		return m_scopeIndex;
+	}
+	std::vector<Token> getScopeTokens()
+	{
+		return m_scopeTokens;
+	}
+	std::string getStringRep()
+	{
+		return "Scope Index [" + std::to_string(m_scopeIndex) + "]";
+	}
+private:
+	int m_scopeIndex;
+	std::vector<Token> m_scopeTokens;
+};
 
 void Lexer::analyze()
 {
 	std::string _tokenValue = "";
-	GeneralTokenType _gTokenType = GeneralTokenType::k_unexpected;
+	Token::GeneralTokenType _gTokenType = Token::GeneralTokenType::k_unexpected;
 
-	while (!isTerminated(getValue())) 
+	while (!isTerminated(getValue()))
 	{
 		//initialize token type and token value for the current character
-		_gTokenType = getGeneralTokenType(getValue());
+		_gTokenType = getCurrGTokenType(getValue());
 		_tokenValue.clear();
 
-		if (_gTokenType == GeneralTokenType::k_unexpected)
+		switch (_gTokenType) 
 		{
-			//special case premature return
-			_tokenValue = "UNEXPECTED";
-			m_tokens.push_back(Token::Token(_gTokenType, _tokenValue));
-			nextValue();
-			continue;
-		}
-		else if (_gTokenType == GeneralTokenType::seq_delimiter) 
-		{
-			//process the first non-delim character in the next iteration (prevents adding delim characters to the list of tokens).
-			while (isDelimiter(getValue())) 
+			case Token::GeneralTokenType::seq_delimiter: 
 			{
-				nextValue();
+				while (isDelimiter(getValue()))
+				{
+					nextValue();
+				}
+				continue; 
 			}
-			continue;
-		}
-		else if (_gTokenType == GeneralTokenType::seq_identifier)
-		{
-			//process identifier-sequence
-			while (isIdentifier(getValue())) 
+			case Token::GeneralTokenType::k_unexpected: 
 			{
-				_tokenValue.push_back(getValue());
+				_tokenValue = "UNEXPECTED";
 				nextValue();
+				break;
 			}
-			m_tokens.push_back(Token::Token(_gTokenType, _tokenValue));
-		}
-		else if (_gTokenType == GeneralTokenType::seq_number)
-		{
-			//process number-sequence
-			while (isNumber(getValue())) 
+			case Token::GeneralTokenType::seq_identifier:
 			{
-				_tokenValue.push_back(getValue());
-				nextValue();
-			}
-			m_tokens.push_back(Token::Token(_gTokenType, _tokenValue));
-		}
-		else if (_gTokenType == GeneralTokenType::ind_commentStart)
-		{
-			//process comment tokens
-			nextValue();
-			_gTokenType = getGeneralTokenType(getValue());
-			if (_gTokenType != GeneralTokenType::ind_commentStart)
-			{
-				_tokenValue.push_back('/');
-				m_tokens.push_back(Token::Token(GeneralTokenType::seq_identifier, _tokenValue));
-				continue;
-			}
-			else 
-			{
-				nextValue();
-				while (!isCommentEnd(getValue())) 
+				while (isIdentifier(getValue()))
 				{
 					_tokenValue.push_back(getValue());
 					nextValue();
 				}
-				m_tokens.push_back(Token::Token(GeneralTokenType::seq_commentValue, _tokenValue));
+				break;
+			}
+			case Token::GeneralTokenType::seq_number: 
+			{
+				bool _hasDecimalPoint = false;
+				while (isNumber(getValue(), _hasDecimalPoint))
+				{
+					_tokenValue.push_back(getValue());
+					nextValue();
+				}
+				break;
+			}
+			case Token::GeneralTokenType::seq_commentStart:
+			{
+				_gTokenType = getCurrGTokenType(getValue());
+				if (_gTokenType != Token::GeneralTokenType::seq_commentStart)
+				{
+					_tokenValue.push_back('/');
+					_gTokenType = Token::GeneralTokenType::seq_identifier;
+				}
+				else
+				{
+					_gTokenType = Token::GeneralTokenType::seq_commentValue;
+					nextValue();
+					while (!isCommentEnd(getValue()))
+					{
+						_tokenValue.push_back(getValue());
+						nextValue();
+					}
+				}
+				break;
+			}
+			default: 
+			{
+				_tokenValue.push_back(getValue());
+				nextValue();
+			}
+		}
+
+		/*
+		if (_gTokenType == Token::GeneralTokenType::seq_delimiter)
+		{
+			//process the first non-delim character in the next iteration (prevents adding delim characters to the list of tokens).
+			while (isDelimiter(getValue()))
+			{
+				nextValue();
+			}
+			continue;
+		}
+		else if (_gTokenType == Token::GeneralTokenType::k_unexpected)
+		{
+			//special case premature return
+			_tokenValue = "*UNEXPECTED";
+			nextValue();
+		}
+		else if (_gTokenType == Token::GeneralTokenType::seq_identifier)
+		{
+			//process identifier-sequence
+			while (isIdentifier(getValue()))
+			{
+				_tokenValue.push_back(getValue());
+				nextValue();
+			}
+		}
+		else if (_gTokenType == Token::GeneralTokenType::seq_number)
+		{
+			bool _hasDecimalPoint = false;
+			//process number-sequence
+			while (isNumber(getValue(), _hasDecimalPoint))
+			{
+				_tokenValue.push_back(getValue());
+				nextValue();
+			}
+		}
+		else if (_gTokenType == Token::GeneralTokenType::seq_commentStart)
+		{
+			//process comment tokens
+			nextValue();
+			_gTokenType = getCurrGTokenType(getValue());
+			if (_gTokenType != Token::GeneralTokenType::seq_commentStart)
+			{
+				_tokenValue.push_back('/');
+				_gTokenType = Token::GeneralTokenType::seq_identifier;
+			}
+			else
+			{
+				_gTokenType = Token::GeneralTokenType::seq_commentValue;
+				nextValue();
+				while (!isCommentEnd(getValue()))
+				{
+					_tokenValue.push_back(getValue());
+					nextValue();
+				}
 			}
 		}
 		else 
 		{
 			_tokenValue.push_back(getValue());
-			m_tokens.push_back(Token::Token(_gTokenType, _tokenValue));
 			nextValue();
 		}
+		*/
+		addToken(_gTokenType, _tokenValue);
 	}
 }
 
-void Lexer::nextValue()
-{
-	++m_source;
-}
-void Lexer::previousValue()
-{
-	--m_source;
-}
-
-GeneralTokenType Lexer::getGeneralTokenType(char charValue)
-{
-	switch (charValue)
-	{
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
-	case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
-	case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
-	case 'V': case 'W': case 'X': case 'Y': case 'Z':
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
-	case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
-	case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
-	case 'v': case 'w': case 'x': case 'y': case 'z':
-		return GeneralTokenType::seq_identifier;
-	case '0': case '1': case '2': case '3': case '4': case '5': case '6':
-	case '7': case '8': case '9':
-		return GeneralTokenType::seq_number;
-	case ' ': case '\n': case '\r': case '\t': case '\f': case '\v':
-		return GeneralTokenType::seq_delimiter;
-	case '/':
-		return GeneralTokenType::ind_commentStart;
-	case '{':
-		return GeneralTokenType::ind_scopeStart;
-	case '}':
-		return GeneralTokenType::ind_scopeEnd;
-	case '.':
-		return GeneralTokenType::ind_statementEnd;
-	case ',':
-		return GeneralTokenType::ind_accessor;
-	case '\0':
-		return GeneralTokenType::k_terminate;
-	default:
-		return GeneralTokenType::k_unexpected;
-	}
-}
-char Lexer::getValue() 
-{
-	return *m_source;
-}
-bool Lexer::isDelimiter(char c) 
-{
-	switch (c) 
-	{
-		case ' ': case '\n': case '\r': case '\t': case '\f': case '\v':
-			return true;
-		default: 
-			return false;
-	}
-}
-bool Lexer::isCommentEnd(char c)  
-{
-	return c == '\n' || c == '\v' || c =='\r' || c == '\0';
-}
-bool Lexer::isTerminated(char c)  
-{
-	if (c == '\0') return true;
-	else return false;
-}
-bool Lexer::isIdentifier(char c)  
-{
-	switch (c) 
-	{
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
-	case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
-	case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
-	case 'V': case 'W': case 'X': case 'Y': case 'Z':
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
-	case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
-	case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
-	case 'v': case 'w': case 'x': case 'y': case 'z':
-		return true;
-	default:
-		return false;
-	}
-}
-bool Lexer::isNumber(char c)  
-{
-	switch (c) 
-	{
-	case '0': case '1': case '2': case '3': case '4': case '5': case '6':
-	case '7': case '8': case '9': 
-		return true;
-	default: 
-		return false;
-	}
-}

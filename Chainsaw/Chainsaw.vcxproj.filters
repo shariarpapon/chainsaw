@@ -47,6 +47,9 @@
     <ClInclude Include="Lexer.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
     <ClInclude Include="GeneralTokenType.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
