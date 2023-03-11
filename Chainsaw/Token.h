@@ -20,7 +20,7 @@ namespace chainsaw {
 			}
 			inline virtual std::string getStringRep()
 			{ 
-				return "<" + std::to_string(m_gTokenType) + "> |" + m_tokenValue + "|";
+				return "Type<" + std::to_string(m_gTokenType) + "> |" + m_tokenValue + "|";
 			}
 		protected:
 			GeneralTokenType m_gTokenType;

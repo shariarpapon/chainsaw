@@ -124,7 +124,7 @@ void Lexer::parseDelimiters()
 }
 void Lexer::parseUnexpected(std::string& _tokenValue)
 {
-	_tokenValue = "UNEXPECTED";
+	_tokenValue = UNEXPECTED_TOKEN_VALUE;
 	nextValue();
 }
 void Lexer::parseIdentifiers(std::string& _tokenValue)

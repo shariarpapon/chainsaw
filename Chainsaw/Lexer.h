@@ -9,6 +9,7 @@ namespace chainsaw {
 		static const std::string SOURCE_FILE_EXTENSION = ".saw";
 		static const std::string BLOCK_START_TOKEN_VALUE = "*BLOCK_START*";
 		static const std::string BLOCK_END_TOKEN_VALUE = "*BLOCK_END*";
+		static const std::string UNEXPECTED_TOKEN_VALUE = "*UNEXPECTED*";
 		
 		class Lexer
 		{
@@ -24,9 +25,11 @@ namespace chainsaw {
 			}
 			inline static void printTokensStrRep(std::vector<Token*>& _tokens) 
 			{
+				int i = 0;
 				for (Token* token : _tokens) 
 				{
-					std::cout << token->getStringRep() << std::endl;
+					++i;
+					std::cout << "[TK-"+std::to_string(i)+ "] " + token->getStringRep() << std::endl;
 				}
 			}
 			inline static void expandBlockTokens(std::vector<Token*>& _tokens) 
@@ -37,11 +40,7 @@ namespace chainsaw {
 					BlockToken* bkTokenPtr = dynamic_cast<BlockToken*>(orgTokenPtr);
 					if (bkTokenPtr)
 					{
-						for (Token* tokenPtr : bkTokenPtr->getBlockTokens())
-						{
-							Token* nwToken = new Token(*tokenPtr);
-							_expandedTokens.push_back(nwToken);
-						}
+						expandBlockTokensRecursively(_expandedTokens, bkTokenPtr);
 					}
 					else 
 					{
@@ -50,6 +49,22 @@ namespace chainsaw {
 				};
 				_tokens.clear();
 				_tokens = _expandedTokens;
+			}
+			inline static void expandBlockTokensRecursively(std::vector<Token*>& _expTokens, BlockToken* _bkTokenPtr)
+			{
+				for (Token* tokenPtr : _bkTokenPtr->getBlockTokens())
+				{
+					BlockToken* nwBkTokenPtr = dynamic_cast<BlockToken*>(tokenPtr);
+					if (nwBkTokenPtr)
+					{
+						expandBlockTokensRecursively(_expTokens, nwBkTokenPtr);
+					}
+					else 
+					{
+						Token* nwToken = new Token(*tokenPtr);
+						_expTokens.push_back(nwToken);
+					}
+				}
 			}
 
 			//Will analyze the source assigned in the constructor; starting from the current character address
@@ -89,7 +104,7 @@ namespace chainsaw {
 					return ind_commentStart;
 
 				case '+': case '-': case '*': case '/': case '%': case '&': case '<':
-				case '>': case '=': case '|': case '!': case ':':
+				case '>': case '=': case '|': case '!': case ':': case '?': case '^':
 					return ind_operatorDelim;
 				case ';':
 					return ind_statementEnd;
