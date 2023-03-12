@@ -1,9 +1,42 @@
 #include <iostream>
+#include <cstring>
 #include <vector>
 #include <string>
 #include "Lexer.h"
 
-using namespace chainsaw::core;
+
+extern "C" __declspec(dllexport) struct ChainsawToken 
+{
+public:
+	int tokenId;
+	char* tokenValue;
+	char* strRep;
+};
+
+extern "C" __declspec(dllexport) ChainsawToken** GetChainsawTokens(const char* source, int* count)
+{
+	Lexer lexer(source);
+	std::vector<Token*> tokenPtrs = lexer.analyze();
+	lexer.expandBlockTokens(tokenPtrs);
+
+	*count = static_cast<int>(tokenPtrs.size());
+	ChainsawToken** tokens = new ChainsawToken*[tokenPtrs.size()];
+
+	int x = 0;
+	for (Token* tk : tokenPtrs) 
+	{
+		ChainsawToken* ctk = new ChainsawToken();
+		ctk->strRep = new char[tk->getStringRep().length() + 1];
+		strcpy_s(ctk->strRep, tk->getStringRep().length() + 1, tk->getStringRep().c_str());
+		ctk->tokenId = static_cast<int>(tk->getGTokenType());
+		ctk->tokenValue = new char[tk->getTokenValue().length() + 1];
+		strcpy_s(ctk->tokenValue, tk->getTokenValue().length() + 1, tk->getTokenValue().c_str());
+		tokens[x] = ctk;
+		x++;
+	}
+
+	return tokens;
+}
 
 std::vector<Token*> Lexer::analyze()
 {
@@ -15,63 +48,6 @@ std::vector<Token*> Lexer::analyze()
 	{
 		//initialize token type and token value for the current character
 		_gTokenType = getCurrGTokenType(getValue());
-		_tokenValue.clear();
-
-		switch (_gTokenType) 
-		{
-			case seq_delimiter: 
-			{
-				parseDelimiters();
-				continue;
-			}
-			case k_unexpected: 
-			{
-				parseUnexpected(_tokenValue);
-				break;
-			}
-			case seq_identifier:
-			{
-				parseIdentifiers(_tokenValue);
-				break;
-			}
-			case seq_number: 
-			{
-				parseNumbers(_tokenValue);
-				break;
-			}
-			case ind_commentStart:
-			{
-				parseComment(_gTokenType, _tokenValue);
-				break;
-			}
-			default: 
-			{
-				parseRegularToken(_tokens,_gTokenType, _tokenValue);
-				continue;
-			}
-		}
-		addToken(_tokens, _gTokenType, _tokenValue);
-	}
-	return _tokens;
-}
-std::vector<Token*> Lexer::analyzeBlock(GeneralTokenType& _gTokenType, GeneralTokenType _bkeToken)
-{
-	std::vector<Token*> _tokens;
-	std::string _tokenValue = "";
-
-	addToken(_tokens, getCurrGTokenType(getValue()), BLOCK_START_TOKEN_VALUE);
-	nextValue();
-
-	while (!isNullTerminator(getValue()))
-	{
-		//initialize token type and token value for the current character
-		_gTokenType = getCurrGTokenType(getValue());
-
-		if (_gTokenType == _bkeToken)
-		{
-			break;
-		}
-
 		_tokenValue.clear();
 
 		switch (_gTokenType)
@@ -107,13 +83,70 @@ std::vector<Token*> Lexer::analyzeBlock(GeneralTokenType& _gTokenType, GeneralTo
 			continue;
 		}
 		}
-
 		addToken(_tokens, _gTokenType, _tokenValue);
 	}
-
-	addToken(_tokens, getCurrGTokenType(getValue()), BLOCK_END_TOKEN_VALUE);
 	return _tokens;
 }
+std::vector<Token*> Lexer::analyzeBlock(GeneralTokenType& _gTokenType, GeneralTokenType _bkeToken)
+	{
+		std::vector<Token*> _tokens;
+		std::string _tokenValue = "";
+
+		addToken(_tokens, getCurrGTokenType(getValue()), BLOCK_START_TOKEN_VALUE);
+		nextValue();
+
+		while (!isNullTerminator(getValue()))
+		{
+			//initialize token type and token value for the current character
+			_gTokenType = getCurrGTokenType(getValue());
+
+			if (_gTokenType == _bkeToken)
+			{
+				break;
+			}
+
+			_tokenValue.clear();
+
+			switch (_gTokenType)
+			{
+			case seq_delimiter:
+			{
+				parseDelimiters();
+				continue;
+			}
+			case k_unexpected:
+			{
+				parseUnexpected(_tokenValue);
+				break;
+			}
+			case seq_identifier:
+			{
+				parseIdentifiers(_tokenValue);
+				break;
+			}
+			case seq_number:
+			{
+				parseNumbers(_tokenValue);
+				break;
+			}
+			case ind_commentStart:
+			{
+				parseComment(_gTokenType, _tokenValue);
+				break;
+			}
+			default:
+			{
+				parseRegularToken(_tokens, _gTokenType, _tokenValue);
+				continue;
+			}
+			}
+
+			addToken(_tokens, _gTokenType, _tokenValue);
+		}
+
+		addToken(_tokens, getCurrGTokenType(getValue()), BLOCK_END_TOKEN_VALUE);
+		return _tokens;
+	}
 
 void Lexer::parseDelimiters() 
 {

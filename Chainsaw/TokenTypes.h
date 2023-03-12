@@ -1,31 +1,26 @@
 #pragma once
-namespace chainsaw {
-	namespace core {
-	
-		enum GeneralTokenType
-		{
-			seq_delimiter = 0,
-			seq_identifier,
-			seq_number,
-			seq_commentValue,
 
-			ind_commentStart,
-			ind_statementEnd,
-			ind_operatorDelim,
-			ind_accessor,
+enum GeneralTokenType
+{
+	seq_delimiter = 0,
+	seq_identifier,
+	seq_number,
+	seq_commentValue,
 
-			enc_string,
+	ind_commentStart,
+	ind_statementEnd,
+	ind_operatorDelim,
+	ind_accessor,
 
-			bks_scope,
-			bke_scope,
-			bk_scope,
-			bks_expression,
-			bke_expression,
-			bk_expression,
+	enc_string,
 
-			k_terminate,
-			k_unexpected,
-		};
+	bks_scope,
+	bke_scope,
+	bk_scope,
+	bks_expression,
+	bke_expression,
+	bk_expression,
 
-	}
-}
+	k_terminate,
+	k_unexpected,
+};

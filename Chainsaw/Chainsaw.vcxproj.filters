@@ -13,37 +13,19 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Utils">
-      <UniqueIdentifier>{a875cf94-ce7e-48b2-a0d6-c8ab8d730946}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{6828b869-46fd-4f8f-aab5-958358a0fc92}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Main">
-      <UniqueIdentifier>{e3028879-ef87-457b-8dc2-fc33360035c9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Core">
       <UniqueIdentifier>{45718764-ea15-45d2-990e-a6fb5c93ad94}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Utils">
-      <UniqueIdentifier>{e272999a-07c3-4113-8e43-823a932cef2f}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GeneralUtils.cpp">
-      <Filter>Source Files\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Chainsaw.cpp">
-      <Filter>Source Files\Main</Filter>
-    </ClCompile>
     <ClCompile Include="Lexer.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneralUtils.h">
-      <Filter>Header Files\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="Lexer.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
