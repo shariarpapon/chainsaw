@@ -1,4 +1,6 @@
 #pragma once
+#include <iostream>
+#include <vector>
 #include <typeinfo>
 #include "Token.h"
 #include "TokenTypes.h"
@@ -134,7 +136,7 @@ private:
 	{
 		return *m_source;
 	}
-	inline bool isValidDelimiter(char c)
+	inline bool isWhiteSpace(char c)
 	{
 		switch (c)
 		{

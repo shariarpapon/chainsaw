@@ -4,40 +4,6 @@
 #include <string>
 #include "Lexer.h"
 
-
-extern "C" __declspec(dllexport) struct ChainsawToken 
-{
-public:
-	int tokenId;
-	char* tokenValue;
-	char* strRep;
-};
-
-extern "C" __declspec(dllexport) ChainsawToken** GetChainsawTokens(const char* source, int* count)
-{
-	Lexer lexer(source);
-	std::vector<Token*> tokenPtrs = lexer.analyze();
-	lexer.expandBlockTokens(tokenPtrs);
-
-	*count = static_cast<int>(tokenPtrs.size());
-	ChainsawToken** tokens = new ChainsawToken*[tokenPtrs.size()];
-
-	int x = 0;
-	for (Token* tk : tokenPtrs) 
-	{
-		ChainsawToken* ctk = new ChainsawToken();
-		ctk->strRep = new char[tk->getStringRep().length() + 1];
-		strcpy_s(ctk->strRep, tk->getStringRep().length() + 1, tk->getStringRep().c_str());
-		ctk->tokenId = static_cast<int>(tk->getGTokenType());
-		ctk->tokenValue = new char[tk->getTokenValue().length() + 1];
-		strcpy_s(ctk->tokenValue, tk->getTokenValue().length() + 1, tk->getTokenValue().c_str());
-		tokens[x] = ctk;
-		x++;
-	}
-
-	return tokens;
-}
-
 std::vector<Token*> Lexer::analyze()
 {
 	std::vector<Token*> _tokens;
@@ -150,7 +116,7 @@ std::vector<Token*> Lexer::analyzeBlock(GeneralTokenType& _gTokenType, GeneralTo
 
 void Lexer::parseDelimiters() 
 {
-	while (isValidDelimiter(getValue()))
+	while (isWhiteSpace(getValue()))
 	{
 		nextValue();
 	}
