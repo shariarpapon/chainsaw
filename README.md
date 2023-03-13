@@ -6,13 +6,13 @@ By, Shariar Papon
 </b>
 
 #### ** To use existing tokenizer import Chainsaw.dll **
-#### ** For customization entire visual studio solution is provided in the repo **
+#### ** For customization, entire visual studio solution is provided in the repo **
 
 ### Exported Contents
 Here are the c++ methods and structures that are declared as exportable
 
 ```cpp
-//This struct holds the data of a token type and source string value
+//This struct holds the data of a token type and the source string value of the token
 
 struct CToken {
     int tokenId; //The token ID representing the respective GeneralTokenType enum value.
