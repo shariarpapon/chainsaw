@@ -1,7 +1,6 @@
 ## Chainsaw Tokenizer
 By, Shariar Papon
 
-
 <b>
 ---------------------------------------------
 </b>
@@ -14,30 +13,22 @@ Here are the c++ methods and structures that are declared as exportable
 
 ```cpp
 //This struct holds the data of a token type and source string value
-```
-<b>
 
-```cpp
 struct CToken {
     int tokenId; //The token ID representing the respective GeneralTokenType enum value.
     char* tokenValue; //The raw string value of the token from the source.
     char* tokenStrRep; //A string representation of the token Id & value.
 }
 ```
-</b>
 
 ```cpp
 //This function tokenizes the source char* passed in and returns an array of CToken pointers.
 //Note the source char* must be null terminated to avoid undefined behavior.
 //If keepCompact is true, nested scope blocks and expressions will not be expanded recursively.
 //The size value is set to the number of CToken* in memory starting from the base of CToken**.
-```
-<b>
 
-```cpp
 CToken** Tokenize(const char* source, bool keepCompact, int* size);
 ```
-</b>
 
 ### Translate tokenId to general token types enum:
 #### Enum Type Prefix Definitions:
@@ -52,7 +43,7 @@ CToken** Tokenize(const char* source, bool keepCompact, int* size);
 
 ```cpp
 enum GeneralTokenType {
-    seq_delimiter = 0, //start at id = 0.
+	seq_delimiter = 0, //start at id = 0.
 	seq_identifier,
 	seq_number,
 	seq_commentValue,
